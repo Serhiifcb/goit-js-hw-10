@@ -1,13 +1,20 @@
+import debounce from 'lodash.debounce';
 import './css/styles.css';
 
 const DEBOUNCE_DELAY = 300;
 // let name = peru;
 const refInput = document.querySelector('#search-box');
-refInput.addEventListener('input', event => {
-  let countryInput = event.target.value;
-  // console.log(countryInput);
-  fetchCountries(countryInput);
-});
+refInput.addEventListener(
+  'input',
+  debounce(event => {
+    let countryInput = event.target.value;
+    if (countryInput === '') {
+      return;
+    }
+    // console.log(countryInput);
+    fetchCountries(countryInput);
+  }, DEBOUNCE_DELAY)
+);
 function fetchCountries(Input) {
   fetch(
     'https://restcountries.com/v2/name/' +
