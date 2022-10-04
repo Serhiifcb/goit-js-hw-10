@@ -1,8 +1,8 @@
 import debounce from 'lodash.debounce';
+import Notiflix from 'notiflix';
 import './css/styles.css';
 
 const DEBOUNCE_DELAY = 300;
-// let name = peru;
 const refInput = document.querySelector('#search-box');
 const refInfo = document.querySelector('.country-info');
 const refList = document.querySelector('.country-list');
@@ -10,27 +10,30 @@ const refList = document.querySelector('.country-list');
 refInput.addEventListener(
   'input',
   debounce(event => {
-    let countryInput = event.target.value;
+    let countryInput = event.target.value.trim();
     refList.innerHTML = '';
     refInfo.innerHTML = '';
     if (countryInput === '') {
       return;
     }
-    // console.log(countryInput);
     fetchCountries(countryInput);
   }, DEBOUNCE_DELAY)
 );
-function fetchCountries(Input) {
+
+function fetchCountries(name) {
   fetch(
-    'https://restcountries.com/v2/name/' +
-      Input +
-      '?fields=name,capital,population,flags,languages'
+    `https://restcountries.com/v2/name/${name}?fields=name,capital,population,flags,languages`
   )
     .then(response => {
       return response.json();
     })
     .then(data => {
-      // console.log(data);
+      if (data.length > 10) {
+        Notiflix.Notify.info(
+          'Too many matches found. Please enter a more specific name.'
+        );
+        return;
+      }
       if (data.length === 1) {
         const markupInfo = `
         <div class="flag-and-name">
@@ -40,10 +43,6 @@ function fetchCountries(Input) {
         <div class="country-item"><p class="item-name">Capital: </p>${data[0].capital}</div>
         <div class="country-item"><p class="item-name">Population: </p>${data[0].population}</div>
         `;
-        // console.log('Name: ', data[0].name);
-        // console.log('Capital: ', data[0].capital);
-        // console.log('Population: ', data[0].population);
-        // console.log('Flag: ', data[0].flags.svg);
         let markupLanguage = '';
         if (data[0].languages.length === 1) {
           markupLanguage = `
@@ -63,16 +62,16 @@ function fetchCountries(Input) {
           refInfo.innerHTML = markupInfo + markupLanguage + `</div>`;
         }
       } else {
-        // for (let i = 0; i < data.length; i++) {
-        //   console.log(data[i].name);
-        // }
         const markupList = data
-          .map(country => `<li class="list-item">${country.name}</li>`)
+          .map(
+            country =>
+              `<li class="list-item"><img src="${country.flags.svg}" class="flag-list">${country.name}</li>`
+          )
           .join('');
         refList.innerHTML = markupList;
       }
     })
     .catch(error => {
-      console.log('Not found country');
+      Notiflix.Notify.failure('Oops, there is no country with that name');
     });
 }
